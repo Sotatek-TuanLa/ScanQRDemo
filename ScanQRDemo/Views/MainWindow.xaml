@@ -1,0 +1,522 @@
+﻿<Window x:Class="ScanQRDemo.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="ScanQR Demo â€” USB Camera QR Scanner"
+        Height="720" Width="1200"
+        MinHeight="600" MinWidth="900"
+        WindowStartupLocation="CenterScreen"
+        Closing="Window_Closing">
+
+    <Window.Resources>
+
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+
+        <!-- â”€â”€ Colour palette â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+        <SolidColorBrush x:Key="Surface"      Color="#1A1D27"/>
+        <SolidColorBrush x:Key="SurfaceAlt"   Color="#22263A"/>
+        <SolidColorBrush x:Key="Accent"       Color="#6366F1"/>
+        <SolidColorBrush x:Key="AccentHover"  Color="#818CF8"/>
+        <SolidColorBrush x:Key="Danger"       Color="#EF4444"/>
+        <SolidColorBrush x:Key="DangerHover"  Color="#F87171"/>
+        <SolidColorBrush x:Key="Success"      Color="#22C55E"/>
+        <SolidColorBrush x:Key="TextPrimary"  Color="#F1F5F9"/>
+        <SolidColorBrush x:Key="TextMuted"    Color="#64748B"/>
+        <SolidColorBrush x:Key="Border"       Color="#2D3148"/>
+
+        <!-- â”€â”€ CornerRadius helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+        <CornerRadius x:Key="R8">8</CornerRadius>
+        <CornerRadius x:Key="R5">5</CornerRadius>
+
+        <!-- â”€â”€ Icon button style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+        <Style x:Key="PrimaryBtn" TargetType="Button">
+            <Setter Property="Height"          Value="40"/>
+            <Setter Property="Padding"         Value="20,0"/>
+            <Setter Property="FontSize"        Value="13"/>
+            <Setter Property="FontWeight"      Value="SemiBold"/>
+            <Setter Property="Foreground"      Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Background"      Value="{StaticResource Accent}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor"          Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{StaticResource AccentHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DangerBtn" TargetType="Button" BasedOn="{StaticResource PrimaryBtn}">
+            <Setter Property="Background" Value="{StaticResource Danger}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background"
+                                        Value="{StaticResource DangerHover}"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="GhostBtn" TargetType="Button" BasedOn="{StaticResource PrimaryBtn}">
+            <Setter Property="Background" Value="#2D3148"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Bd"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="6"
+                                BorderBrush="{StaticResource Border}"
+                                BorderThickness="1"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Bd" Property="Background" Value="#383D5A"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Bd" Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- â”€â”€ TextBox style â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+        <Style x:Key="DarkTextBox" TargetType="TextBox">
+            <Setter Property="Height"           Value="40"/>
+            <Setter Property="Width"            Value="70"/>
+            <Setter Property="Padding"          Value="10,0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background"       Value="#22263A"/>
+            <Setter Property="Foreground"       Value="{StaticResource TextPrimary}"/>
+            <Setter Property="BorderBrush"      Value="{StaticResource Border}"/>
+            <Setter Property="BorderThickness"  Value="1"/>
+            <Setter Property="FontSize"         Value="13"/>
+            <Setter Property="CaretBrush"       Value="{StaticResource TextPrimary}"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- â”€â”€ ScrollBar minimal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width"       Value="6"/>
+            <Setter Property="Background"  Value="Transparent"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ScrollBar">
+                        <Grid>
+                            <Border Background="#1A1D27" CornerRadius="3"/>
+                            <Track x:Name="PART_Track" IsDirectionReversed="True">
+                                <Track.Thumb>
+                                    <Thumb>
+                                        <Thumb.Template>
+                                            <ControlTemplate TargetType="Thumb">
+                                                <Border Background="#3D4270"
+                                                        CornerRadius="3"
+                                                        Margin="1"/>
+                                            </ControlTemplate>
+                                        </Thumb.Template>
+                                    </Thumb>
+                                </Track.Thumb>
+                            </Track>
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- â”€â”€ ListBox for QR Results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+        <Style x:Key="QRListBox" TargetType="ListBox">
+            <Setter Property="Background"       Value="Transparent"/>
+            <Setter Property="BorderThickness"  Value="0"/>
+            <Setter Property="Padding"          Value="0"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        </Style>
+
+        <Style x:Key="QRListItem" TargetType="ListBoxItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding"     Value="0"/>
+            <Setter Property="Margin"      Value="0,0,0,8"/>
+            <Setter Property="Background"  Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+    </Window.Resources>
+
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <!--                          ROOT LAYOUT                                -->
+    <!-- â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="56"/>
+            <!-- Top bar    -->
+            <RowDefinition Height="*"/>
+            <!-- Main area  -->
+            <RowDefinition Height="44"/>
+            <!-- Status bar -->
+        </Grid.RowDefinitions>
+
+        <!-- â•â• TOP BAR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+        <Border Grid.Row="0"
+                Background="Black"
+              
+                BorderThickness="0,0,0,1">
+            <Grid Margin="20,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Logo / Title -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="32" Height="32" CornerRadius="8"
+                            Background="{StaticResource Accent}" Margin="0,0,10,0">
+                        <TextBlock Text="QR" FontWeight="Bold" FontSize="13"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="ScanQR Demo"
+                               FontSize="16" FontWeight="Bold"
+                               Foreground="{StaticResource TextPrimary}"
+                               VerticalAlignment="Center"/>
+                    <TextBlock Text="USB Camera Scanner"
+                               FontSize="12" Foreground="{StaticResource TextMuted}"
+                               Margin="10,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Camera index input + buttons -->
+                <StackPanel Grid.Column="2" Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="Camera:"
+                               Foreground="{StaticResource TextMuted}"
+                               FontSize="12" VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+                    <ComboBox ItemsSource="{Binding AvailableCameras}"
+                              SelectedItem="{Binding SelectedCamera, Mode=TwoWay}"
+                              DisplayMemberPath="Name"
+                              Width="180" Height="36" Margin="0,0,8,0"
+                              VerticalContentAlignment="Center"
+                              ToolTip="Select Camera"
+                              Background="#22263A"
+                              Foreground="Black" 
+                              BorderBrush="{StaticResource Border}"
+                              BorderThickness="1"/>
+                    <Button Content="Connect"
+                            Style="{StaticResource PrimaryBtn}"
+                            Command="{Binding ConnectCommand}"
+                            Margin="0,0,8,0"/>
+                    <Button Content="Disconnect"
+                            Style="{StaticResource DangerBtn}"
+                            Command="{Binding DisconnectCommand}"
+                            Margin="0,0,8,0"/>
+                    <Button Content="Capture"
+                            Style="{StaticResource GhostBtn}"
+                            Command="{Binding CaptureCommand}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- â•â• MAIN AREA â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+        <Grid Grid.Row="1" Margin="16,12,16,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="320"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- â”€â”€ Camera Feed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+            <Border Grid.Column="0"
+                    Background="{StaticResource Surface}"
+                    CornerRadius="12"
+                    BorderBrush="{StaticResource Border}"
+                    BorderThickness="1"
+                    ClipToBounds="True">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="86*"/>
+                        <ColumnDefinition Width="331*"/>
+                    </Grid.ColumnDefinitions>
+                    <!-- Placeholder when no feed -->
+                    <StackPanel VerticalAlignment="Center"
+                                HorizontalAlignment="Left"
+                                Visibility="{Binding IsNotRunning,
+                                    Converter={StaticResource BoolToVis}}" Grid.Column="1" Margin="142,0,0,0">
+                        <TextBlock Text="â¬¤" FontSize="48"
+                                   Foreground="#2D3148"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="No camera connected"
+                                   Foreground="{StaticResource TextMuted}"
+                                   FontSize="15" Margin="0,8,0,4"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Press 'â–¶ Connect' to start the live feed."
+                                   Foreground="#3D4270" FontSize="12"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Live image -->
+                    <Image Source="{Binding CameraImage}"
+                           Stretch="Uniform"
+                           RenderOptions.BitmapScalingMode="HighQuality" Grid.ColumnSpan="2"/>
+
+                    <!-- LIVE badge -->
+                    <Border VerticalAlignment="Top" HorizontalAlignment="Left"
+                            Margin="12,12,0,0" CornerRadius="4"
+                            Padding="8,3"
+                            Visibility="{Binding IsRunning,
+                                Converter={StaticResource BoolToVis}}">
+                        <Border.Background>
+                            <SolidColorBrush Color="#22C55E" Opacity="0.18"/>
+                        </Border.Background>
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse Width="7" Height="7" Fill="{StaticResource Success}">
+                                <Ellipse.Triggers>
+                                    <EventTrigger RoutedEvent="Loaded">
+                                        <BeginStoryboard>
+                                            <Storyboard RepeatBehavior="Forever">
+                                                <DoubleAnimation
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    From="1" To="0.2" Duration="0:0:0.8"
+                                                    AutoReverse="True"/>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </EventTrigger>
+                                </Ellipse.Triggers>
+                            </Ellipse>
+                            <TextBlock Text="LIVE" FontSize="11" FontWeight="Bold"
+                                       Foreground="{StaticResource Success}"
+                                       VerticalAlignment="Center"
+                                       Margin="5,0,0,0"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Border>
+
+            <!-- â”€â”€ sidebar spacer (column 1 is just a gap) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+
+            <!-- â”€â”€ Sidebar: QR Results â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <!-- Header -->
+                <Border Grid.Row="0"
+                        Background="{StaticResource Surface}"
+                        CornerRadius="12,12,0,0"
+                        BorderBrush="{StaticResource Border}"
+                        BorderThickness="1,1,1,0"
+                        Padding="14,10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="QR Results"
+                                       FontWeight="Bold" FontSize="14"
+                                       Foreground="{StaticResource TextPrimary}"/>
+                            <TextBlock FontSize="11" Foreground="{StaticResource TextMuted}">
+                                <Run Text="{Binding DetectedCount, Mode=OneWay}"/>
+                                <Run Text=" code(s) found"/>
+                            </TextBlock>
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                Content="Clear"
+                                Style="{StaticResource GhostBtn}"
+                                Height="30" Padding="12,0" FontSize="11"
+                                Command="{Binding ClearResultsCommand}"/>
+                    </Grid>
+                </Border>
+
+                <!-- Result list -->
+                <Border Grid.Row="1"
+                        Background="{StaticResource Surface}"
+                        BorderBrush="{StaticResource Border}"
+                        BorderThickness="1,0,1,0">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto"
+                                  Padding="10,8">
+                        <ListBox Style="{StaticResource QRListBox}"
+                                 ItemsSource="{Binding QRResults}"
+                                 ItemContainerStyle="{StaticResource QRListItem}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource SurfaceAlt}"
+                                            CornerRadius="8"
+                                            BorderBrush="{StaticResource Border}"
+                                            BorderThickness="1"
+                                            Padding="12,10">
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+
+                                            <!-- ID badge + timestamp -->
+                                            <StackPanel Orientation="Horizontal">
+                                                <Border Background="{StaticResource Accent}"
+                                                        CornerRadius="4"
+                                                        Padding="6,2">
+                                                    <TextBlock FontSize="10"
+                                                               FontWeight="Bold"
+                                                               Foreground="White">
+                                                        <Run Text="QR #"/>
+                                                        <Run Text="{Binding Id}"/>
+                                                    </TextBlock>
+                                                </Border>
+                                                <TextBlock Text="{Binding LastSeen,
+                                                                StringFormat='HH:mm:ss'}"
+                                                           Margin="6,0,0,0"
+                                                           FontSize="10"
+                                                           Foreground="{StaticResource TextMuted}"
+                                                           VerticalAlignment="Center"/>
+                                            </StackPanel>
+
+                                            <!-- Decoded text -->
+                                            <TextBlock Grid.Row="1"
+                                                       Text="{Binding Text}"
+                                                       Foreground="{StaticResource TextPrimary}"
+                                                       FontSize="13"
+                                                       TextWrapping="Wrap"
+                                                       Margin="0,6,0,0"/>
+
+                                            <!-- Point count -->
+                                            <TextBlock Grid.Row="2"
+                                                       FontSize="10"
+                                                       Foreground="{StaticResource TextMuted}"
+                                                       Margin="0,4,0,0">
+                                                <Run Text="Corners detected: "/>
+                                                <Run Text="{Binding Points.Length, Mode=OneWay}"/>
+                                            </TextBlock>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </ScrollViewer>
+                </Border>
+
+                <!-- Footer hint -->
+                <Border Grid.Row="2"
+                        Background="{StaticResource Surface}"
+                        CornerRadius="0,0,12,12"
+                        BorderBrush="{StaticResource Border}"
+                        BorderThickness="1,1,1,1"
+                        Padding="14,8">
+                    <TextBlock Text="QR codes on frames are decoded automatically."
+                               FontSize="10"
+                               Foreground="{StaticResource TextMuted}"
+                               TextWrapping="Wrap"/>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- â•â• STATUS BAR â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+        <Border Grid.Row="2"
+                Background="{StaticResource Surface}"
+                BorderBrush="{StaticResource Border}"
+                BorderThickness="0,1,0,0"
+                Padding="20,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Status pill -->
+                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <Ellipse Width="8" Height="8"
+                             Fill="{Binding StatusBrush}"
+                             Margin="0,0,6,0"/>
+                    <TextBlock Text="{Binding StatusText}"
+                               FontSize="12" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimary}"
+                               VerticalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- Centre hint -->
+                <TextBlock Grid.Column="1"
+                           Text="OpenCV + ZXing.Net  |  MVVM Architecture  |  USB Camera"
+                           FontSize="11"
+                           Foreground="{StaticResource TextMuted}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+
+                <!-- Right: detected count -->
+                <TextBlock Grid.Column="2"
+                           FontSize="12"
+                           Foreground="{StaticResource TextMuted}"
+                           VerticalAlignment="Center">
+                    <Run Text="Total decoded: "/>
+                    <Run Text="{Binding DetectedCount, Mode=OneWay}"
+                         Foreground="{StaticResource AccentHover}"
+                         FontWeight="Bold"/>
+                </TextBlock>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
