@@ -40,8 +40,6 @@ namespace ScanQRDemo.Services
                 _deviceKeys.Add(deviceInfo.cameraKey);
                 cameras.Add(new CameraDevice { Index = i, Name = name });
             }
-            var x = new  CameraDevice();
-
             return cameras;
         }
 
